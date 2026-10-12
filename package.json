@@ -3,12 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3005",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "next start -p 3005",
+    "lint": "eslint",
+    "db:migrate": "node scripts/migrate.mjs",
+    "invite": "node scripts/invite.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "check:pages": "node scripts/pagecheck.mjs",
+    "check:rls": "node scripts/rls-check.mjs",
+    "check:editor": "node scripts/e2e-editor.mjs",
+    "perf": "node scripts/perf.mjs",
+    "check:realtime": "node scripts/realtime-check.mjs",
+    "check:nav": "node scripts/nav-check.mjs",
+    "check:wizard": "node scripts/wizard-check.mjs",
+    "shots": "node scripts/screens.mjs",
+    "check:workspace": "node scripts/workspace-check.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
@@ -19,6 +33,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "lighthouse": "^12.8.2",
+    "postgres": "^3.4.9",
+    "puppeteer-core": "^25.13.0",
     "typescript": "^5"
   }
 }

@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ShotCraft
 
-## Getting Started
+Product videos from your code. Give it a public GitHub repo (or a zipped
+project) and describe what to show; an agent reads the code and uses the
+video-shotcraft skill to make the video. Plan: `serverreal/docs/11-shotcraft-saas-plan.md`.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Browser ─► this app (Next.js 16) ─► Agent Studio API (agent.tmaritz.xyz) ─► OmniRoute (models)
+                 │
+                 └─► Supabase: Auth · Postgres (projects, videos) · Storage (uploads, renders)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Run it
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev            # http://localhost:3005
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Settings live in `.env.local` (git-ignored, never commit): Supabase URL + anon
+key, the server-only service-role key and database URL, and Agent Studio's URL
++ API key (`shotcraft-local`, created in the Agent Studio portal under
+**API & Logs**).
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command | What it does |
+|---|---|
+| `npm run db:migrate` | Apply `supabase/migrations/*.sql` (once each) to the Supabase database |
+| `npm run invite -- you@example.com --password` | Add a team member with a one-time password (or drop `--password` to email an invite) |
+| `npm run smoke` | End-to-end test against the real services. Needs the app on :3100 (`npm run build && npx next start -p 3100`); creates and deletes its own test user, video and job |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Supabase dashboard settings (one-time)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Auth → Sign In / Providers:** turn **off** "Allow new users to sign up" —
+  the team is added with `npm run invite`.
+- **Auth → URL Configuration:** Site URL `http://localhost:3005`; add
+  `http://localhost:3005/**` to Redirect URLs (needed for emailed sign-in links;
+  password sign-in works without it). Add the real domain at deploy time.
+- **Speed:** **JWT Signing Keys → migrate to asymmetric keys.** Every page checks
+  the session; with asymmetric keys that check happens locally instead of a
+  round trip to Supabase on each request.
+- **Security:** the service-role key and database password were shared in a
+  chat on 2026-10-11 — rotate both (Project Settings → API / Database).
 
-## Deploy on Vercel
+## How it's built (for speed)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Pages are **partially prerendered** (Next.js Cache Components): the shell is
+  static and paints immediately; signed-in data streams in behind `<Suspense>`.
+- No UI library, no web fonts, one CSS file. Client JavaScript only where it
+  is needed: the new-video form (zip upload) and the live job view.
+- Zips go straight from the browser to Supabase Storage; Agent Studio fetches
+  them through a 1-hour signed link — big files never pass through this app.
+- The Agent Studio key is used only on the server (`src/lib/agent.ts`, marked
+  `server-only`); the browser talks to `/api/videos/*`, which checks the
+  session before relaying.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Layout
+
+```
+src/proxy.ts                       session refresh + sign-in gate (Next 16's middleware)
+src/lib/agent.ts                   Agent Studio API client (server-only)
+src/lib/supabase/{server,client}   Supabase clients
+src/app/login                      password + emailed-link sign-in
+src/app/(app)/videos               list · new · [id] (live job view)
+src/app/api/videos/[id]/*          stream · sync · download · messages · cancel
+supabase/migrations                database schema (tables, RLS, buckets, realtime)
+```
