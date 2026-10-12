@@ -37,6 +37,7 @@ async function Video({ params }: { params: PageProps<"/videos/[id]">["params"] }
           createdAt: video.created_at, error: video.error, durationS: video.duration_s ?? 30,
           style: STYLE[video.style] ?? video.style, mode: video.mode === "checkpoints" ? "With reviews" : "Straight through",
           exports: video.exports ?? [],
+          audio: video.audio ?? null,
         }}
         editor={{
           token: editorToken(video.id),

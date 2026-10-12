@@ -1,6 +1,8 @@
 // The message that starts a video job in Agent Studio. Everything the agent
 // needs is in the JSON spec; the shotcraft-job skill (bundled with Agent
 // Studio) defines what it does with it, stage by stage.
+import type { MusicMood, SfxLevel } from "@/lib/audio";
+
 export interface JobSpec {
   project: string;
   title: string;
@@ -16,6 +18,9 @@ export interface JobSpec {
   duration_s: number;
   aspect: "16:9";
   render: "final" | "draft";
+  /** Voice-over voice (Deepgram Aura-2 id) or null; music mood; sound design.
+   *  `avoid_tracks` = music the team's recent videos used, so each one sounds new. */
+  audio: { voice: string | null; music: MusicMood; sfx: SfxLevel; avoid_tracks: string[] };
 }
 
 export function buildJobPrompt(spec: JobSpec) {

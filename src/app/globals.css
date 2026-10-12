@@ -333,6 +333,62 @@ fieldset.plain > legend { font-weight: 650; font-size: 14px; padding: 0; margin-
 .summary dt:last-of-type, .summary dd:last-of-type { border-bottom: 0; }
 .clip3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
+/* The sound step: narrator cards with a play button, music moods, effects. */
+.btn.sm { min-height: 32px; padding: .35rem .75rem; font-size: 13px; border-radius: 10px; }
+.sound-block { display: grid; gap: .85rem; padding: 1.1rem 1.15rem; border: 1px solid var(--border-2); border-radius: 15px; background: rgba(0, 0, 0, .28); min-width: 0; }
+.sound-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.sound-head > div, .sound-title { display: grid; gap: .2rem; font-size: 14.5px; }
+.switch { position: relative; display: block; width: 46px; height: 26px; flex: none; cursor: pointer; }
+.switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 99px; background: rgba(255, 255, 255, .12); border: 1px solid var(--border-2); pointer-events: none; transition: background-color .2s; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45); transition: transform .2s ease; }
+.switch input:checked + span { background: var(--grad); border-color: transparent; }
+.switch input:checked + span::after { transform: translateX(20px); }
+.switch input:focus-visible + span { outline: 2px solid var(--ring); outline-offset: 2px; }
+.switch input:disabled + span { opacity: .4; }
+.voice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .6rem; }
+.voice-card { position: relative; display: flex; align-items: center; gap: .6rem; padding: .7rem .65rem .7rem .9rem; border-radius: 13px; border: 1px solid var(--border-2);
+  background: rgba(255, 255, 255, .02); cursor: pointer; font-weight: 400; transition: border-color .2s, background-color .2s, box-shadow .2s; }
+.voice-card:hover { border-color: rgba(255, 255, 255, .26); }
+.voice-card input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.voice-card.on { border-color: rgba(167, 139, 250, .65); background: linear-gradient(135deg, rgba(139, 92, 246, .14), rgba(217, 70, 239, .06)); box-shadow: 0 0 0 3px rgba(139, 92, 246, .12); }
+.voice-card:has(input:focus-visible) { outline: 2px solid var(--ring); outline-offset: 2px; }
+.voice-text { display: grid; gap: .12rem; min-width: 0; flex: 1; }
+.voice-text b { font-size: 14px; }
+.voice-card.on .voice-text b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.voice-meta, .voice-tags { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1em; }
+.voice-meta .skeleton { display: block; width: 75%; height: 10px; margin-top: 2px; border-radius: 4px; }
+.voice-play { all: unset; box-sizing: border-box; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; cursor: pointer;
+  color: var(--text); background: var(--glass-2); border: 1px solid var(--border-2); transition: background-color .2s, transform .12s; }
+.voice-play:hover { background: rgba(255, 255, 255, .12); }
+.voice-play:active { transform: scale(.94); }
+.voice-play:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.voice-play.playing { color: #fff; background: var(--grad); border-color: transparent; box-shadow: 0 6px 18px -6px rgba(217, 70, 239, .8); }
+.voice-play.loading { animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .4; } }
+.voice-more { display: flex; align-items: flex-end; gap: .7rem; flex-wrap: wrap; }
+.voice-more label { flex: 1 1 260px; font-size: 13px; }
+.mood-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: .55rem; }
+.mood { position: relative; display: grid; align-content: start; gap: .15rem; padding: .7rem .8rem; border-radius: 12px; border: 1px solid var(--border-2); background: rgba(255, 255, 255, .02);
+  cursor: pointer; font-weight: 400; transition: border-color .2s, background-color .2s; }
+.mood input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.mood b { font-size: 13.5px; }
+.mood span { font-size: 12px; color: var(--muted); }
+.mood:hover { border-color: rgba(255, 255, 255, .26); }
+.mood.on { border-color: rgba(167, 139, 250, .65); background: linear-gradient(135deg, rgba(139, 92, 246, .14), rgba(217, 70, 239, .06)); }
+.mood.none b { color: var(--text-2); }
+.mood:has(input:focus-visible) { outline: 2px solid var(--ring); outline-offset: 2px; }
+/* Video page: the voice-over script (Brief tab, storyboard list). */
+.vo-script { margin-top: .9rem; }
+.vo-script summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.vo-script ol { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; gap: .5rem; }
+.vo-script li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: .6rem; font-size: 14px; color: var(--text-2); line-height: 1.45; }
+.vo-script li .tc { font-size: 11.5px; padding-top: .15rem; }
+.vo-line { display: block; margin-top: .2rem; color: var(--text-2); font-style: italic; }
+.vo-line i { font: 600 9.5px/1 var(--mono); font-style: normal; letter-spacing: .08em; padding: .2rem .35rem; margin-right: .45rem; border-radius: 5px;
+  color: #fff; background: var(--grad-soft); border: 1px solid rgba(167, 139, 250, .4); vertical-align: 1px; }
+
 /* --- Video page ---------------------------------------------------------------- */
 .facts { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .8rem; }
 .facts span { font: 500 11.5px/1 var(--mono); letter-spacing: .03em; padding: .45rem .6rem; border-radius: 8px; background: rgba(255, 255, 255, .04);
@@ -552,6 +608,12 @@ video.preview { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius
   .ws-pane { padding: 1rem; }
   .stage { align-content: start; min-height: 0; }
   .stage-screen { width: 100%; }
+}
+@media (max-width: 560px) {
+  .voice-grid { grid-template-columns: 1fr 1fr; }
+  .voice-tags { display: none; }
+  .voice-card { gap: .4rem; padding: .6rem .5rem .6rem .7rem; }
+  .voice-play { width: 28px; height: 28px; }
 }
 @media (max-width: 560px) {
   .ws-tabs button .icon { display: none; }

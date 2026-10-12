@@ -8,6 +8,7 @@ import { JobProgress } from "./JobProgress";
 import { ReviewPanel } from "./ReviewPanel";
 import { EditorFrame } from "./edit/EditorFrame";
 import { Icon, type IconName } from "@/components/Icon";
+import { moodLabel, SFX_LEVELS, voiceName, type AudioChoice } from "@/lib/audio";
 
 // The video workspace: chat with the agent on the left, the film on the
 // right -- preview, manual timeline edit, files and the brief as tabs.
@@ -36,6 +37,7 @@ export interface WorkspaceVideo {
   id: string; title: string; project: string | null; status: VideoStatus; files: VideoFile[]; state: JobState | null;
   hasJob: boolean; brief: string; source: string; liveUrl: string | null; hasLogin: boolean; attached: string[];
   createdAt: string; error: string | null; durationS: number; style: string; mode: string; exports: VideoExport[];
+  audio: AudioChoice | null;
 }
 export interface WorkspaceEditor { token: string; project: string | null; savedAt: string | null }
 
@@ -55,6 +57,7 @@ const SUGGESTIONS = [
   "Give it a darker, more cinematic look",
   "End on a stronger call to action",
   "Slow down the dashboard shot",
+  "Try a different music track",
 ];
 
 function toItems(events: Ev[]): Item[] {
@@ -435,11 +438,43 @@ export function Workspace({ video, editor }: { video: WorkspaceVideo; editor: Wo
                 <dt>Created</dt><dd>{new Date(video.createdAt).toLocaleString()}</dd>
               </dl>
             </div>
+            <SoundCard asked={video.audio} state={jobState} />
             <JobProgress state={jobState} live={working} />
           </div>
         </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+/** The Brief tab's sound summary: what was asked for, and what the agent used. */
+function SoundCard({ asked, state }: { asked: AudioChoice | null; state: JobState | null }) {
+  const made = state?.audio;
+  if (!asked && !made) return null;
+  const voice = made?.voice !== undefined ? made.voice : asked?.voice ?? null;
+  const track = made?.music;
+  const vo = made?.vo?.length ? made.vo
+    : (state?.storyboard?.shots ?? []).filter((s) => s.vo).map((s) => ({ shot: s.id, text: s.vo!, seconds: undefined }));
+  const sfx = made?.sfx ?? asked?.sfx;
+  return (
+    <div className="card">
+      <h2>Sound</h2>
+      <dl className="kv">
+        <dt>Voice-over</dt><dd>{voice ? `${voiceName(voice)} · Deepgram Aura` : "None"}</dd>
+        <dt>Music</dt>
+        <dd>{track ? (<>{track.title ?? track.id}{track.artist ? ` — ${track.artist}` : ""}
+          {track.mood ? <span className="muted"> · {moodLabel(track.mood)}</span> : null}
+          {track.license ? <span className="hint" style={{ display: "block" }}>{track.license}</span> : null}</>)
+          : asked?.music === "none" ? "None" : asked ? `${moodLabel(asked.music)} — chosen while building` : "—"}</dd>
+        {sfx && (<><dt>Effects</dt><dd>{SFX_LEVELS.find((x) => x.id === sfx)?.label ?? sfx}</dd></>)}
+      </dl>
+      {vo.length > 0 && (
+        <details className="vo-script">
+          <summary>Voice-over script <span className="muted">· {vo.length} line{vo.length > 1 ? "s" : ""}</span></summary>
+          <ol>{vo.map((l) => <li key={l.shot}><span className="tc muted">{l.shot}{l.seconds ? ` · ${l.seconds.toFixed(1)}s` : ""}</span>{l.text}</li>)}</ol>
+        </details>
+      )}
     </div>
   );
 }

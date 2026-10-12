@@ -1,3 +1,5 @@
+import type { AudioChoice, AudioRecord } from "@/lib/audio";
+
 export type VideoStatus = "draft" | "queued" | "running" | "review" | "done" | "failed" | "cancelled";
 
 export interface VideoFile { path: string; size: number; mtime: number }
@@ -19,6 +21,8 @@ export interface Video {
   live_url: string | null;
   assets: VideoAsset[];
   has_login: boolean;
+  /** Sound the user asked for; null on videos made before voice-overs. */
+  audio: AudioChoice | null;
   status: VideoStatus;
   agent_job_id: string | null;
   result: { ok: boolean; text: string; turns?: number; secs?: number } | null;
@@ -59,7 +63,7 @@ export interface BrandKit {
 }
 export interface Storyboard {
   route?: string; why?: string; duration_s?: number;
-  shots?: { id: string; card?: string; seconds?: number; purpose?: string; on_screen_text?: string; screen?: string }[];
+  shots?: { id: string; card?: string; seconds?: number; purpose?: string; on_screen_text?: string; screen?: string; vo?: string }[];
 }
 export interface JobState {
   stage: JobStage; progress: number; label: string; updated_at?: string;
@@ -71,6 +75,7 @@ export interface JobState {
     notes?: string;
   };
   stack?: { framework?: string; styling?: string[]; backend?: string[] };
+  audio?: AudioRecord;
   outputs?: { path: string; kind: string; bytes?: number }[];
   warnings?: string[]; awaiting?: { kind: "brief" | "storyboard"; question: string } | null; error?: string | null;
 }

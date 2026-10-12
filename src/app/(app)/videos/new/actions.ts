@@ -5,6 +5,7 @@ import { createClient, currentUser } from "@/lib/supabase/server";
 import { agentJson, videoStatus, type AgentJob } from "@/lib/agent";
 import { buildJobPrompt } from "@/lib/prompt";
 import type { VideoAsset } from "@/lib/types";
+import { MUSIC_MOODS, SFX_LEVELS, VOICE_ID, type AudioChoice } from "@/lib/audio";
 
 export interface CreateVideoState { error: string | null }
 
@@ -41,6 +42,14 @@ export async function createVideo(_prev: CreateVideoState, form: FormData): Prom
   const durationS = [15, 30, 45, 60].includes(Number(form.get("duration_s"))) ? Number(form.get("duration_s")) : 30;
   const styleIn = String(form.get("style") || "auto");
   const style = (["auto", "template", "free"].includes(styleIn) ? styleIn : "auto") as "auto" | "template" | "free";
+  const voiceIn = String(form.get("voice") || "");
+  const musicIn = String(form.get("music") || "auto");
+  const sfxIn = String(form.get("sfx") || "subtle");
+  const audio: AudioChoice = {
+    voice: VOICE_ID.test(voiceIn) ? voiceIn : null,
+    music: MUSIC_MOODS.find((m) => m.id === musicIn)?.id ?? "auto",
+    sfx: SFX_LEVELS.find((x) => x.id === sfxIn)?.id ?? "subtle",
+  };
   // Review steps on unless the user unticked them.
   const mode = form.get("review") === "on" ? ("checkpoints" as const) : ("auto" as const);
   // Webhooks need a public address -- set APP_PUBLIC_URL once deployed. On
@@ -60,8 +69,14 @@ export async function createVideo(_prev: CreateVideoState, form: FormData): Prom
     liveUrl ??= new URL(loginUrl).origin;
   }
   if (!assets) return { error: "Those screenshot uploads didn't come through -- add them again." };
+  if (voiceIn && !audio.voice) return { error: "Pick a narrator from the list, or switch the voice-over off." };
 
   const supabase = await createClient();
+
+  // Music the team's recent videos used: the agent picks something else.
+  const { data: recent } = await supabase.from("videos").select("state->audio->music->>id")
+    .not("state->audio->music->>id", "is", null).order("created_at", { ascending: false }).limit(12);
+  const avoidTracks = [...new Set((recent ?? []).map((r) => (r as { id?: string }).id).filter((id): id is string => Boolean(id)))];
 
   // Reuse a project with the same name, else create it.
   let { data: proj } = await supabase.from("projects").select("id").ilike("name", project).maybeSingle();
@@ -77,7 +92,7 @@ export async function createVideo(_prev: CreateVideoState, form: FormData): Prom
     project_id: proj.id, title, brief, source_type: source,
     repo_url: source === "repo" ? repoUrl : null, zip_path: source === "zip" ? zipPath : null,
     live_url: liveUrl, status: "draft", mode, style, duration_s: durationS,
-    assets, has_login: hasLogin,
+    assets, has_login: hasLogin, audio,
   }).select("id").single();
   if (error) return { error: error.message };
 
@@ -108,6 +123,7 @@ export async function createVideo(_prev: CreateVideoState, form: FormData): Prom
           login: hasLogin ? { url: loginUrl, secrets: ".secrets/login.json", keys: ["email", "password"] } : null,
           assets: assets.map((a) => ({ file: `uploads/${a.name}`, kind: a.kind, ...(assetsNote ? { note: assetsNote } : {}) })),
           mode, style, duration_s: durationS, aspect: "16:9", render: "final",
+          audio: { ...audio, avoid_tracks: avoidTracks },
         }),
         // The login goes to Agent Studio only -- never into the prompt or this database.
         ...(hasLogin ? { secrets: { email: loginUser, password: loginPassword } } : {}),

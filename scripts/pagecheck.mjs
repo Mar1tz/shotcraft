@@ -24,7 +24,7 @@ const get = (p, o = {}) => fetch(APP + p, { redirect: "manual", ...o, headers: {
 
 const PAGES = [
   ["/videos", ["Your videos", "New video"]],
-  ["/videos/new", ["The story", "Add a test login", "Add screenshots or a screen recording", "login_password"]],
+  ["/videos/new", ["The story", "Add a test login", "Add screenshots or a screen recording", "login_password", "Voice-over", "Sound effects"]],
   ["/stats", ["Stats"]],
 ];
 

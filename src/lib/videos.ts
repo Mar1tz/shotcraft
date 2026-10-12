@@ -17,3 +17,12 @@ export async function jobFor(id: string): Promise<{ video: Video; job: string } 
   if (!video.agent_job_id) return Response.json({ error: "This video has no agent job" }, { status: 409 });
   return { video, job: video.agent_job_id };
 }
+
+/** For route handlers that cost money (voice previews): team members only, else a ready error Response. */
+export async function requireTeam(): Promise<Response | null> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims?.claims) return Response.json({ error: "Not signed in" }, { status: 401 });
+  const { data: team } = await supabase.rpc("is_team");
+  return team ? null : Response.json({ error: "Not on the team" }, { status: 403 });
+}

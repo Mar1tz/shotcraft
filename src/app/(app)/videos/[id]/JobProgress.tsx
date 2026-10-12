@@ -77,7 +77,8 @@ export function JobProgress({ state, live = false, compact = false }: { state: J
                 {state.storyboard.duration_s ? ` · ${state.storyboard.duration_s}s` : ""}{state.storyboard.route ? ` · ${state.storyboard.route}` : ""}</summary>
               <ol className="small shots">
                 {state.storyboard.shots.map((s) => (
-                  <li key={s.id}><b>{s.seconds ? `${s.seconds}s` : ""}</b> {s.purpose}{s.on_screen_text ? ` — “${s.on_screen_text}”` : ""}</li>
+                  <li key={s.id}><b>{s.seconds ? `${s.seconds}s` : ""}</b> {s.purpose}{s.on_screen_text ? ` — “${s.on_screen_text}”` : ""}
+                    {s.vo && <span className="vo-line"><i>VO</i>{s.vo}</span>}</li>
                 ))}
               </ol>
             </details>

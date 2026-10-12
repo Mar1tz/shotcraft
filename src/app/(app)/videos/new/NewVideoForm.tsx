@@ -2,6 +2,8 @@
 
 import { useActionState, useRef, useState, useTransition } from "react";
 import { createVideo, type CreateVideoState } from "./actions";
+import { SoundPicker } from "./SoundPicker";
+import { moodLabel, SFX_LEVELS, voiceName } from "@/lib/audio";
 
 const MAX_ZIP_MB = 50; // Supabase free-plan per-file limit
 const MAX_ASSETS = 8;
@@ -13,10 +15,11 @@ const STEPS = [
   { label: "The code", lead: "Where the agent reads the project from." },
   { label: "Real screens", lead: "Optional — the more real material, the more real the video." },
   { label: "Format", lead: "How long, which look, and whether you review along the way." },
+  { label: "Sound", lead: "A narrator, a music bed and sound effects — every video gets its own track." },
   { label: "Ready", lead: "Check it over, then start the agent." },
 ] as const;
 
-interface Summary { project: string; title: string; brief: string; code: string; screens: string; length: string; style: string; review: boolean }
+interface Summary { project: string; title: string; brief: string; code: string; screens: string; length: string; style: string; sound: string; review: boolean }
 
 // One form, shown a step at a time: every field stays in the DOM (so files and
 // values survive going back), only the current step is visible, and each step
@@ -52,6 +55,11 @@ export function NewVideoForm() {
       screens: screens || "The agent finds them itself (boots the app, or recreates the screens)",
       length: `${s("duration_s")} seconds`,
       style: { auto: "The agent chooses", template: "Ink Press template", free: "Free creation, in your brand" }[s("style") as "auto"] ?? s("style"),
+      sound: [
+        s("voice") ? `Narrated by ${voiceName(s("voice"))}` : "No voice-over",
+        s("music") === "none" ? "no music" : s("music") === "auto" ? "music the agent picks" : `${moodLabel(s("music")).toLowerCase()} music`,
+        s("sfx") === "off" ? "no effects" : `${(SFX_LEVELS.find((x) => x.id === s("sfx"))?.label ?? "subtle").toLowerCase()} effects`,
+      ].join(" · "),
       review: fd.get("review") === "on",
     };
   }
@@ -260,7 +268,12 @@ export function NewVideoForm() {
         </section>
 
         <section {...panel(4)}>
-          <h3 id="step-4" className="sr-only">Ready</h3>
+          <h3 id="step-4" className="sr-only">Sound</h3>
+          <SoundPicker active={step === 4} />
+        </section>
+
+        <section {...panel(5)}>
+          <h3 id="step-5" className="sr-only">Ready</h3>
           {summary && (
             <dl className="summary">
               <dt>Project</dt><dd>{summary.project}</dd>
@@ -269,6 +282,7 @@ export function NewVideoForm() {
               <dt>Code</dt><dd>{summary.code}</dd>
               <dt>Screens</dt><dd>{summary.screens}</dd>
               <dt>Format</dt><dd>{summary.length} · {summary.style}</dd>
+              <dt>Sound</dt><dd>{summary.sound}</dd>
               <dt>Reviews</dt><dd>{summary.review ? "You approve the brief and the storyboard" : "Straight through to the video"}</dd>
             </dl>
           )}
@@ -278,7 +292,7 @@ export function NewVideoForm() {
         <div className="wizard-nav">
           {step > 0 ? <button type="button" className="btn ghost" onClick={() => goTo(step - 1)} disabled={busy}>← Back</button> : <span />}
           {step < last ? (
-            <button type="submit" className="btn primary lg">{step === 2 ? "Next — format" : "Next"} →</button>
+            <button type="submit" className="btn primary lg">{step === 2 ? "Next — format" : step === 3 ? "Next — sound" : "Next"} →</button>
           ) : (
             <button type="submit" className="btn primary lg" disabled={busy}>
               {uploading ? "Uploading files…" : pending ? "Starting the agent…" : "Make the video"}

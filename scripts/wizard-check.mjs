@@ -48,10 +48,30 @@ try {
   ok((await step()) === "Format", `-> "${await step()}"`);
   await shot(4);
   await next();
+  ok((await step()) === "Sound", `-> "${await step()}"`);
+  // Voices load when the step opens (or fail, when Agent Studio has no TTS yet).
+  await page.waitForFunction(() => !document.querySelector(".voice-meta .skeleton"), { timeout: 20000 }).catch(() => {});
+  const cards = await page.$$eval(".voice-card", (l) => l.length);
+  if (cards) {
+    await page.$eval(".voice-card:nth-child(3)", (e) => e.click());
+    ok((await page.$eval("input[name=voice]", (e) => e.value)) === "aura-2-odysseus-en", `picking a narrator sets the voice (${cards} featured)`);
+    const sample = await page.evaluate(() => fetch("/api/tts/preview?voice=aura-2-odysseus-en").then(async (r) => [r.status, r.headers.get("content-type"), (await r.arrayBuffer()).byteLength]));
+    ok(sample[0] === 200 && sample[1] === "audio/mpeg" && sample[2] > 5000, `voice sample plays (${sample.join(" ")})`);
+  } else {
+    console.log(`      (voices unavailable: ${await page.$eval(".sound", (e) => e.innerText.match(/aren't available[^.]*/)?.[0] ?? "?")})`);
+  }
+  await page.$eval(".mood input[value=electronic]", (e) => e.click());
+  await page.$eval(".seg input[value=punchy]", (e) => e.click());
+  await shot(5);
+  await page.$eval(".sound .seg", (e) => e.scrollIntoView({ block: "end" }));
+  await new Promise((r) => setTimeout(r, 300));
+  await page.screenshot({ path: `${out}/wizard-${process.env.W ? "phone" : "desktop"}-5b.png` });
+  await next();
   ok((await step()) === "Ready", `-> "${await step()}"`);
   const summary = await page.$eval(".summary", (e) => e.innerText.replace(/\s+/g, " "));
   ok(summary.includes("WhatsApp linking launch") && summary.includes("github.com/agentora/app"), `summary shows the answers`);
-  await shot(5);
+  ok(summary.includes("electronic music") && summary.includes("punchy effects") && (!cards || summary.includes("Narrated by Odysseus")), `summary shows the sound`);
+  await shot(6);
   await page.click(".wizard-nav .btn.ghost");
   await new Promise((r) => setTimeout(r, 400));
   await page.click(".wizard-steps li:first-child button");
